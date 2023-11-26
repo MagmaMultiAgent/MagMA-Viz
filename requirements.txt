@@ -1,0 +1,8 @@
+asyncio
+fastapi
+numpy
+starlette
+numpy
+requests
+uvicorn
+websockets
