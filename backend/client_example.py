@@ -1,19 +1,13 @@
-import socket
-import time
 import numpy as np
-import io
-import gzip
-from pickle import dumps, loads
+import random
+
+import logging
+import backend.utils.logging_config
+
+from .client import Client
 
 
-ADDRESS = "127.0.0.1"
-UDP_PORT = 8001
-
-addr = socket.getaddrinfo(
-	ADDRESS, UDP_PORT,
-	socket.AF_INET, socket.SOCK_DGRAM)[0]
-
-def make_data_to_send():
+def make_2d_example():
 	width = 64
 	height = 64
 
@@ -21,7 +15,7 @@ def make_data_to_send():
 	obstacle_color = [192, 192, 192]
 	unit_color = [0, 102, 204]
 
-	board = np.zeros((height, width, 3))
+	board = np.zeros((height, width, 3), dtype=np.int64)
 	board[board[:, :, 0] == 0] = base_color
 
 	obstacle_chance = 0.5
@@ -35,12 +29,57 @@ def make_data_to_send():
 	return board
 
 
-with socket.socket(*addr[:3]) as s:
-	s.connect(addr[4])
+def make_1d_example():
+	return random.random()
 
-	for i in range(100):
-			
-		board = make_data_to_send()
-		compressed = gzip.compress(board.tobytes())
+
+def make_example(episodes: list = None, steps: int = 3):
+	if episodes is None:
+		episodes = [0]
+	data = []
+	for episode in episodes:
+		for step in range(steps):
+			_data = [
+				{
+					"episode": episode,
+					"step": step,
+					"property_name": "board",
+					"tags": ["tag1"],
+					"data": make_2d_example()
+				},
+				{
+					"episode": episode,
+					"step": step,
+					"property_name": "board",
+					"tags": ["tag2"],
+					"data": make_2d_example()
+				},
+				{
+					"episode": episode,
+					"step": step,
+					"property_name": "reward",
+					"tags": ["tag1"],
+					"data": make_1d_example()
+				},
+				{
+					"episode": episode,
+					"step": step,
+					"property_name": "reward",
+					"tags": ["tag2"],
+					"data": make_1d_example()
+				},
+			]
+
+			data += _data
+
+	return data
+
+
+client = Client()
+client.logger.setLevel(logging.DEBUG)
+
+for _ in range(10):
 		
-		s.send(compressed)
+	example = make_example(episodes=[0, 1], steps=3)
+
+	client.send(example)
