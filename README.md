@@ -1,10 +1,9 @@
 # TrainStreamer
 
+0. Clone project and cd into its folder
 1. Run main.py with
 ```
-uvicorn main:app --reload
+uvicorn backend.app.main:app --reload --host 0.0.0.0
 ```
-
-2. Open http://127.0.0.1:8000/ in your browser
-
-3. Run client_example.py to send a UDP message to the server and broadcast the message to all clients (all of your opened tabs)
+2. Open http://localhost:8000/ in your browser
+3. To try out the visualizations run the client example file with `python -m backend.client_example` to send a UDP message to the server containing random data
