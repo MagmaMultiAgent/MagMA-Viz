@@ -1,4 +1,4 @@
-# TrainStreamer
+# MagmaViz
 
 0. Clone project and cd into its folder
 1. Run main.py with
