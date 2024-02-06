@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 
+import logging
 from backend.utils.logging_config import configure_logging
 configure_logging()
 
@@ -22,6 +23,8 @@ UDP_PORT = os.environ.get("VISUALIZATION_PORT", 8001)
 # App
 
 app = FastAPI()
+
+logger = logging.getLogger(__name__)
 
 
 # Middleware
@@ -45,12 +48,46 @@ static_path = frontend_path / "static"
 build_path = frontend_path / "build"
 
 # client can send get requests to get data from train statistics
-@app.get("/api/get_data")
-async def get_data(episode: int, step: int, propertyName: str):
-	data = train_statistics.get_property(episode, step, propertyName)
+@app.get("/api/getPropertyInfo")
+async def get_property_info(propertyName: str):
+	global logger
+	property_info = train_statistics.get_property_info(propertyName)
+	if property_info is None:
+		logger.error(f"Property {propertyName} not found")
+		return JSONResponse(status_code=404, content={"message": f"Property {propertyName} not found"})
+	logger.info(f"Property {propertyName} info: {property_info}")
+	return JSONResponse(property_info)
+
+@app.get("/api/getAllData")
+async def get_all_data(propertyName: str):
+	global logger
+	data = train_statistics.get_data_for_property(propertyName)
 	if data is None:
-		return JSONResponse(content="", status_code=404)
+		logger.error(f"Property {propertyName} not found")
+		return JSONResponse(status_code=404, content={"message": f"Property {propertyName} not found"})
+	logger.info(f"Property {propertyName} data: {data}")
 	return JSONResponse(data)
+
+@app.get("/api/getDataForEpisode")
+async def get_data_for_episode(propertyName: str, episode: int):
+	global logger
+	data = train_statistics.get_data_for_episode(propertyName, episode)
+	if data is None:
+		logger.error(f"Property {propertyName} not found")
+		return JSONResponse(status_code=404, content={"message": f"Property {propertyName} not found"})
+	logger.info(f"Property {propertyName} data for episode {episode}: {data}")
+	return JSONResponse(data)
+
+@app.get("/api/getDataForStep")
+async def get_data_for_step(propertyName: str, episode: int, step: int, env: int):
+	global logger
+	data = train_statistics.get_data_for_step(propertyName, episode, step, env)
+	if data is None:
+		logger.error(f"Property {propertyName} not found")
+		return JSONResponse(status_code=404, content={"message": f"Property {propertyName} not found"})
+	logger.info(f"Property {propertyName} data for episode {episode}, step {step}, env {env}: {data}")
+	return JSONResponse(data)
+
 
 # initialize websocket connection
 @app.websocket("/ws/{client_id}")
@@ -59,7 +96,6 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
 	try:
 		while True:
 			data = await websocket.receive_text()
-			print(f"{client_id} sent {data}")
 	except WebSocketDisconnect:
 		manager.disconnect(websocket)
 
@@ -69,6 +105,7 @@ app.mount("/", StaticFiles(directory=build_path, html=True), name="frontend")
 # catchall route for frontend
 @app.get("/{path:path}")
 def read_path(path: str):
+	_ = path
 	return FileResponse(build_path / "index.html")
 
 

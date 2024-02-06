@@ -30,5 +30,5 @@ class UDPEndpoint(asyncio.DatagramProtocol):
 			self.logger.error(traceback.format_exc())
 			return
 
-		steps = json.dumps(self.train_statistics.get_properties())
-		self.loop.create_task(self.manager.broadcast(steps))
+		properties = json.dumps(self.train_statistics.get_property_infos())
+		self.loop.create_task(self.manager.broadcast(properties))

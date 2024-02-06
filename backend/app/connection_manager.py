@@ -11,8 +11,8 @@ class ConnectionManager:
 	async def connect(self, websocket: WebSocket):
 		await websocket.accept()
 		self.active_connections.append(websocket)
-		steps = json.dumps(self.train_statistics.get_properties())
-		await websocket.send_text(steps)
+		properties = json.dumps(self.train_statistics.get_property_infos())
+		await websocket.send_text(properties)
 
 	def disconnect(self, websocket: WebSocket):
 		self.active_connections.remove(websocket)

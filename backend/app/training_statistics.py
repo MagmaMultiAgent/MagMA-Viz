@@ -3,147 +3,177 @@ import pickle
 
 import numpy as np
 
-from backend.utils.types import PropertyData, StepData, EpisodeData, TrainingDataBatch
+import re
+
+from backend.utils.types import EnvData, EnvDataNative, PropertyData, PropertyInfoNative, TrainingDataBatch, PossibleDTypes, PossibleDataTypes, InferredDataType
 
 
-class Episode:
+class Property:
+	def __init__(self, name: str, dimension: tuple[int], inferred_data_type: InferredDataType, dtype: str):
+		self.name = name
+		self.dimension = dimension
+		self.inferred_data_type = inferred_data_type
+		self.dtype = dtype
+		self.data: PropertyData = {}
 
 	@staticmethod
-	def property_to_native(property_data: PropertyData) -> PropertyData:
+	def data_to_native(data_element: EnvData) -> EnvDataNative:
 		return {
-			"data": property_data["data"].tolist() if isinstance(property_data["data"], np.ndarray) else property_data["data"],
-			"tags": property_data["tags"],
-			"dimensions": list(property_data["dimensions"])
+			"data": data_element["data"].tolist() if isinstance(data_element["data"], np.ndarray) else data_element["data"],
+			"tags": data_element["tags"],
+			"dimension": list(data_element["dimension"]),
+			"inferred_data_type": data_element["inferred_data_type"].name,
+			"dtype": data_element["dtype"]
 		}
 
-	def __init__(self, ind: int, episode_data: EpisodeData = None):
-		if episode_data is None:
-			episode_data = {}
+	def add(self, env: int, episode: int, step: int, tags: list[str], data: PossibleDataTypes, dimension: tuple[int], inferred_data_type: InferredDataType, dtype: str):
+		assert dimension == self.dimension, f"Dimension {dimension} does not match the expected dimension {self.dimension}"
+		assert inferred_data_type == self.inferred_data_type, f"Inferred visualization type {inferred_data_type} does not match the expected type {self.inferred_data_type}"
+		assert dtype == self.dtype, f"Data type {dtype} does not match the expected type {self.dtype}"
 
-		self.ind = ind
-		self.episode_data: EpisodeData = episode_data
+		if episode not in self.data:
+			self.data[episode] = {}
+		if step not in self.data[episode]:
+			self.data[episode][step] = {}
+		self.data[episode][step][env] = {
+			"data": data,
+			"tags": tags,
+			"dimension": dimension,
+			"inferred_data_type": inferred_data_type,
+			"dtype": dtype
+		}
 
-	def get(self, step: int) -> StepData | None:
-		return self.episode_data.get(step, None)
-
-	def get_property(self, step: int, property_name: str) -> PropertyData | None:
-		step_data = self.get(step)
-		if step_data is None:
-			return None
-
-		data = step_data.get(property_name, None)
-
-		if data is None:
-			return None
-
-		return self.property_to_native(data)
-
-	def __getitem__(self, step: int) -> StepData | None:
-		return self.get(step)
-
-	def get_multiple(self, steps: list[int]) -> dict[int, StepData]:
-		return {step: self.get(step) for step in steps if step in self.episode_data}
-
-	def __getslice__(self, start: int, end: int) -> dict[int, StepData]:
-		return self.get_multiple(list(range(start, end)))
-
-	def add(self, episode_data: EpisodeData):
-		self.episode_data = self.episode_data | episode_data
-
-	def get_steps(self) -> list[int]:
-		return sorted(list(self.episode_data.keys()))
-
-	def get_properties(self) -> dict[int, list[str]]:
-		return {step: list(step_data.keys()) for step, step_data in self.episode_data.items()}
-
-	def get_max_step(self) -> int:
-		return max(self.get_steps(), default=0)
-
-	def get_missing_steps(self) -> list[int]:
-		return [step for step in range(self.get_max_step() + 1) if step not in self.get_steps()]
-
-	def to_dict(self) -> EpisodeData:
-		return {step: {property_name: self.property_to_native(data) for property_name, data in step_data.items()} for step, step_data in self.episode_data.items()}
+	def get_step_ids(self) -> dict[int, dict[int, list[int]]]:
+		step_ids = {}
+		for episode, steps in self.data.items():
+			step_ids[episode] = {}
+			for step, envs in steps.items():
+				step_ids[episode][step] = list(envs.keys())
+		return step_ids
 
 class TrainingStatistics:
+	def __init__(self):
+		self.properties = {}
 
 	@staticmethod
 	def decompress_data_to_send(received: bytes) -> TrainingDataBatch:
 		return pickle.loads(gzip.decompress(received))
 
-	def __init__(self):
-		self.training_statistics: dict[int, Episode] = {}
+	@staticmethod
+	def infer_visualization_type(data: PossibleDataTypes) -> tuple[tuple[int], InferredDataType, str]:
+		if isinstance(data, np.ndarray):
+			dimension = data.shape
+			# remove numbers from dtype (e.g. int64) with regex
+			dtype = str(data.dtype)
+			dtype = re.sub(r"\d", "", dtype)
+			if len(dimension) == 1:
+				inferred_data_type = InferredDataType.VECTOR
+			elif len(dimension) == 2:
+				# check if grayscale (every element is a max 255 and int type)
+				if np.max(data) <= 255 and np.min(data) >= 0 and data.dtype in (int, float):
+					inferred_data_type = InferredDataType.GRAYSCALE_MATRIX
+				else:
+					inferred_data_type = InferredDataType.GENERAL_MATRIX
+			elif len(dimension) == 3:
+				if dimension[2] == 3 and np.max(data) <= 255 and np.min(data) >= 0 and data.dtype in (int, float):
+					inferred_data_type = InferredDataType.RGB_MATRIX
+				elif np.max(data) <= 255 and np.min(data) >= 0 and data.dtype in (int, float):
+					inferred_data_type = InferredDataType.GRAYSCALE_MATRIX
+				else:
+					inferred_data_type = InferredDataType.GENERAL_MATRIX
+			else:
+				inferred_data_type = InferredDataType.OTHER
+		else:
+			assert isinstance(data, PossibleDTypes), f"Scalar value must be integer, float or string instead of {type(data)}"
+			dimension = (1,)
+			inferred_data_type = InferredDataType.SCALAR
+			dtype = type(data).__name__
 
-	def get_episodes(self) -> list[int]:
-		return sorted(list(self.training_statistics.keys()))
-
-	def get_max_episode(self) -> int:
-		return max(self.get_episodes())
-
-	def get_missing_episodes(self) -> list[int]:
-		return [episode for episode in range(self.get_max_episode() + 1) if episode not in self.get_episodes()]
-
-	def get_steps(self) -> dict[int, list[int]]:
-		return {episode: self.training_statistics[episode].get_steps() for episode in self.get_episodes()}
-
-	def get_properties(self) -> dict[int, dict[int, list[str]]]:
-		return {episode: self.training_statistics[episode].get_properties() for episode in self.get_episodes()}
-
-	def get_max_step(self) -> int:
-		return max([episode.get_max_step() for episode in self.training_statistics.values()])
-
-	def get_missing_steps(self) -> dict[int, list[int]]:
-		return {episode: self.training_statistics[episode].get_missing_steps() for episode in self.get_episodes()}
-
-	def get_property(self, episode: int, step: int, property_name: str) -> PropertyData | None:
-		return self.training_statistics[episode].get_property(step, property_name)
+		return dimension, inferred_data_type, dtype
 
 	def add(self, received: bytes):
 		batch = self.decompress_data_to_send(received)
-		assert isinstance(batch, list), f"Batch must be a list instead of {type(batch)}"
+		assert isinstance(batch, list), f"Batch must be a list of dictionaries instead of {type(batch)}"
 
-		episodes: dict = {}
 		for element in batch:
 			assert isinstance(element, dict), f"Batch element must be a dictionary: {element}"
 
+			property_name = element["property_name"]
+			env = element.get("env", 0)
 			episode = element.get("episode", 0)
 			step = element["step"]
-			property_name = element["property_name"]
 			tags = element.get("tags", ["default"])
 			data = element["data"]
 
-			assert isinstance(data, float) or isinstance(data, np.ndarray), f"Data must be a floating point number or np.ndarray: {data}"
+			assert isinstance(property_name, str), f"Property name must be a string instead of {type(property_name)}"
+			assert isinstance(env, int), f"Environment ID must be an integer instead of {type(env)}"
+			assert isinstance(episode, int), f"Episode ID must be an integer instead of {type(episode)}"
+			assert isinstance(step, int), f"Step ID must be an integer instead of {type(step)}"
+			assert isinstance(tags, list), f"Tags must be a list of strings instead of {type(tags)}"
+			for tag in tags:
+				assert isinstance(tag, str), f"A tag must be a string instead of {type(tag)}"
 
-			if isinstance(data, np.ndarray):
-				assert len(data.shape) == 2 or len(data.shape) == 3, f"Numpy array must be grayscale matrix with 2 dimensions or RGB matrix with 3 dimensions. Received: {len(data.shape)}"
-				if len(data.shape) == 2:
-					assert data.dtype == float, f"Grayscale Numpy array must be of type np.float64. Received: {data.dtype}"
-				else:
-					assert data.dtype == int, f"RGB Numpy array must be of type np.int64. Received: {data.dtype}"
+			assert isinstance(data, PossibleDataTypes), f"Data must be a scalar value or a Numpy array instead of {type(data)}"
 
-				visualization_dimensions = data.shape
-			else:
-				assert isinstance(data, float), f"Data must be a floating point number. Received: {type(data)}"
-				visualization_dimensions = (1,)
+			dimension, inferred_data_type, dtype = self.infer_visualization_type(data)
 
-			if episode not in episodes:
-				episodes[episode] = {}
-			if step not in episodes[episode]:
-				episodes[episode][step] = {}
-			if property_name not in episodes[episode][step]:
-				episodes[episode][step][property_name] = {}
+			if property_name not in self.properties:
+				self.properties[property_name] = Property(property_name, dimension, inferred_data_type, dtype)
+			self.properties[property_name].add(env, episode, step, tags, data, dimension, inferred_data_type, dtype)
 
-			episodes[episode][step][property_name] = {
-				"data": data,
-				"tags": tags,
-				"dimensions": visualization_dimensions
-			}
+	def get_properties(self) -> list[str]:
+		return sorted(list(self.properties.keys()))
 
-		for episode_id, episode_data in episodes.items():
-			if episode_id not in self.training_statistics:
-				self.training_statistics[episode_id] = Episode(episode_id, episode_data)
-			else:
-				self.training_statistics[episode_id].add(episode_data)
+	def get_property(self, property_name: str) -> Property | None:
+		if property_name not in self.properties:
+			return None
+		return self.properties[property_name]
 
-	def to_dict(self) -> dict[int, EpisodeData]:
-		return {episode: self.training_statistics[episode].to_dict() for episode in self.get_episodes()}
+	def get_property_info(self, property_name: str) -> PropertyInfoNative | None:
+		if property_name not in self.properties:
+			return None
+
+		prop = self.properties[property_name]
+		return {
+			"dimension": prop.dimension,
+			"inferred_data_type": prop.inferred_data_type.name,
+			"dtype": prop.dtype,
+			"step_ids": prop.get_step_ids()
+		}
+
+	def get_property_infos(self) -> dict[str, PropertyInfoNative]:
+		return {prop: self.get_property_info(prop) for prop in self.get_properties()}
+
+	def get_data_for_property(self, property_name: str) -> dict[int, dict[int, dict[int, EnvDataNative]]]:
+		if property_name not in self.properties:
+			return {}
+		prop = self.properties[property_name]
+		data = {}
+		for episode, steps in prop.data.items():
+			data[episode] = {}
+			for step, envs in steps.items():
+				data[episode][step] = {}
+				for env, env_data in envs.items():
+					data[episode][step][env] = prop.data_to_native(env_data)
+		return data
+
+	def get_data_for_episode(self, property_name: str, episode: int) -> dict[int, dict[int, EnvDataNative]]:
+		if property_name not in self.properties:
+			return {}
+		prop = self.properties[property_name]
+		data = {}
+		if episode not in prop.data:
+			return {}
+		for step, envs in prop.data[episode].items():
+			data[step] = {}
+			for env, env_data in envs.items():
+				data[step][env] = prop.data_to_native(env_data)
+		return data
+
+	def get_data_for_step(self, property_name: str, episode: int, step: int, env: int) -> EnvDataNative | None:
+		if property_name not in self.properties:
+			return None
+		prop = self.properties[property_name]
+		if episode not in prop.data or step not in prop.data[episode] or env not in prop.data[episode][step]:
+			return None
+		return prop.data_to_native(prop.data[episode][step][env])
