@@ -14,7 +14,8 @@ export function checkIfNaN(value, default_value = -1) {
     }
     return value
 }
-
 export function getValueOrNone(value) {
     return value ? value : "none";
 }
+
+export const id = () => Math.random().toString(36).substring(2, 9);

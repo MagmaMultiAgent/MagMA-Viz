@@ -55,7 +55,6 @@ async def get_property_info(propertyName: str):
 	if property_info is None:
 		logger.error(f"Property {propertyName} not found")
 		return JSONResponse(status_code=404, content={"message": f"Property {propertyName} not found"})
-	logger.info(f"Property {propertyName} info: {property_info}")
 	return JSONResponse(property_info)
 
 @app.get("/api/getAllData")
@@ -65,7 +64,6 @@ async def get_all_data(propertyName: str):
 	if data is None:
 		logger.error(f"Property {propertyName} not found")
 		return JSONResponse(status_code=404, content={"message": f"Property {propertyName} not found"})
-	logger.info(f"Property {propertyName} data: {data}")
 	return JSONResponse(data)
 
 @app.get("/api/getDataForEpisode")
@@ -75,17 +73,15 @@ async def get_data_for_episode(propertyName: str, episode: int):
 	if data is None:
 		logger.error(f"Property {propertyName} not found")
 		return JSONResponse(status_code=404, content={"message": f"Property {propertyName} not found"})
-	logger.info(f"Property {propertyName} data for episode {episode}: {data}")
 	return JSONResponse(data)
 
 @app.get("/api/getDataForStep")
-async def get_data_for_step(propertyName: str, episode: int, step: int, env: int):
+async def get_data_for_step(propertyName: str, episode: int, step: int):
 	global logger
-	data = train_statistics.get_data_for_step(propertyName, episode, step, env)
+	data = train_statistics.get_data_for_step(propertyName, episode, step)
 	if data is None:
 		logger.error(f"Property {propertyName} not found")
 		return JSONResponse(status_code=404, content={"message": f"Property {propertyName} not found"})
-	logger.info(f"Property {propertyName} data for episode {episode}, step {step}, env {env}: {data}")
 	return JSONResponse(data)
 
 

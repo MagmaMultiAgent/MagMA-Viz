@@ -1,16 +1,12 @@
 <script>
-    import { onMount, onDestroy, afterUpdate } from 'svelte';
-    import { DataViewer } from "./DataViewer.js";
+    import { onMount, onDestroy } from 'svelte';
+    import { id } from "$lib/utils.js";
+    import { DataViewer } from "./DataViewer/DataViewer.js";
 
     let properties = {};
-    let visualizations = [];
 
-    let container, propertySelector;
     let ws;
     onMount(() => {
-        container = document.querySelector("table#container");
-        propertySelector = document.querySelector("select#propertySelector");
-
         let clientId = Date.now();
         ws = new WebSocket(`ws://localhost:8000/ws/${clientId}`);
         ws.onmessage = function(event) {
@@ -25,24 +21,23 @@
         ws.close();
     });
 
+    let items = [id()];
+
     function addVisualization() {
-        let currentDate = new Date();
-        let timestamp = currentDate.getTime();
-        visualizations = [...visualizations, timestamp];
+        items = [...items, id()];
     }
 
 </script>
 
-<h1>Lux AI 2</h1>
 <div>Hello there!</div>
 
 <div id="settings">
     <button on:click={addVisualization}>Add visualization</button>
 </div>
 
-<div id="visualizations">
-    {#each visualizations as visualization}
-        <DataViewer {properties} id={visualization} />
+<div class="grid-container">
+    {#each Object.entries(items) as [ind, item]}
+        <DataViewer {properties} id={item} />
     {/each}
 </div>
 
@@ -52,5 +47,11 @@
         display: flex;
         flex-direction: row;
         align-items: center;
+    }
+
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+        gap: 10px;
     }
 </style>

@@ -7,9 +7,30 @@ import backend.utils.logging_config
 from .client import Client
 
 
-def make_2d_example():
-	width = 64
-	height = 64
+def make_2d_grayscale_example(size: int = 64):
+	width = size
+	height = size
+
+	base_color = 255
+	obstacle_color = 192
+	unit_color = 0
+
+	board = np.zeros((height, width), dtype=np.int64)
+	board[board == 0] = base_color
+
+	obstacle_chance = 0.5
+	obstacle_coords = np.where(np.random.rand(height, width) < obstacle_chance)
+	board[obstacle_coords] = obstacle_color
+
+	unit_chance = 0.1
+	unit_coords = np.where(np.random.rand(height, width) < unit_chance)
+	board[unit_coords] = unit_color
+
+	return board
+
+def make_2d_rgb_example(size: int = 64):
+	width = size
+	height = size
 
 	base_color = [255, 255, 255]
 	obstacle_color = [192, 192, 192]
@@ -28,44 +49,57 @@ def make_2d_example():
 
 	return board
 
-
 def make_1d_example():
 	return random.random()
 
 
-def make_example(episodes: list = None, steps: int = 3):
-	if episodes is None:
-		episodes = [0]
+def make_example(step_start_ind: int = 0, steps: int = 10):
+	envs = [0, 1, 3, 4]
 	data = []
-	for episode in episodes:
-		for step in range(steps):
+
+	for _step in range(steps):
+		step = _step + step_start_ind
+		episode = step // 10
+		for env in envs:
 			_data = [
 				{
+					"env": env,
 					"episode": episode,
 					"step": step,
-					"property_name": "board",
+					"property_name": "board1",
 					"tags": ["tag1"],
-					"data": make_2d_example()
+					"data": make_2d_rgb_example()
 				},
 				{
+					"env": env,
 					"episode": episode,
 					"step": step,
-					"property_name": "board",
+					"property_name": "board2",
 					"tags": ["tag2"],
-					"data": make_2d_example()
+					"data": make_2d_rgb_example()
 				},
 				{
+					"env": env,
 					"episode": episode,
 					"step": step,
-					"property_name": "reward",
-					"tags": ["tag1"],
+					"property_name": "board3",
+					"tags": ["tag3"],
+					"data": make_2d_grayscale_example()
+				},
+				{
+					"env": env,
+					"episode": episode,
+					"step": step,
+					"property_name": "reward1",
+					"tags": ["tag4"],
 					"data": make_1d_example()
 				},
 				{
+					"env": env,
 					"episode": episode,
 					"step": step,
-					"property_name": "reward",
-					"tags": ["tag2"],
+					"property_name": "reward2",
+					"tags": ["tag5"],
 					"data": make_1d_example()
 				},
 			]
@@ -78,8 +112,11 @@ def make_example(episodes: list = None, steps: int = 3):
 client = Client()
 client.logger.setLevel(logging.DEBUG)
 
-for _ in range(10):
-		
-	example = make_example(episodes=[0, 1], steps=3)
+messages = 100
+for i in range(messages):
 
+	if i % 10 == 0:
+		print(f"{i} / {messages}")
+		
+	example = make_example(i*1, 1)
 	client.send(example)

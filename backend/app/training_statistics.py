@@ -170,10 +170,13 @@ class TrainingStatistics:
 				data[step][env] = prop.data_to_native(env_data)
 		return data
 
-	def get_data_for_step(self, property_name: str, episode: int, step: int, env: int) -> EnvDataNative | None:
+	def get_data_for_step(self, property_name: str, episode: int, step: int) -> dict[int, EnvDataNative]:
 		if property_name not in self.properties:
-			return None
+			return {}
 		prop = self.properties[property_name]
-		if episode not in prop.data or step not in prop.data[episode] or env not in prop.data[episode][step]:
-			return None
-		return prop.data_to_native(prop.data[episode][step][env])
+		data = {}
+		if episode not in prop.data or step not in prop.data[episode]:
+			return {}
+		for env, env_data in prop.data[episode][step].items():
+			data[env] = prop.data_to_native(env_data)
+		return data
