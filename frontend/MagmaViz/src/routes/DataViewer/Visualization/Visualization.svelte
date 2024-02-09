@@ -2,18 +2,19 @@
     import {Table} from "./Table/Table.js";
     import {Chart} from "./Chart/Chart.js"
 
+
     export let id;
     export let data;
-    export let selectedVisualizationType;
-    export let selectedVisualizationSubType;
+    export let visualizationType;
+    export let visualizationSubType;
 
 </script>
 
 <div class="container">
-    {#if selectedVisualizationType === "table" || Array.isArray(data)}
-        <Table {data} {selectedVisualizationSubType} />
-    {:else if selectedVisualizationType === "chart"}
-        <Chart {id} {data} {selectedVisualizationSubType} />
+    {#if visualizationType === "table" || Array.isArray(data)}
+        <Table {data} {visualizationSubType} />
+    {:else if visualizationType === "chart"}
+        <Chart {id} {data} {visualizationSubType} />
     {/if}
 </div>
 

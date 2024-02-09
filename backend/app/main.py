@@ -84,6 +84,16 @@ async def get_data_for_step(propertyName: str, episode: int, step: int):
 		return JSONResponse(status_code=404, content={"message": f"Property {propertyName} not found"})
 	return JSONResponse(data)
 
+@app.get("/api/getDataForEnv")
+async def get_data_for_env(propertyName: str, episode: int, step: int,  env: int):
+	global logger
+	data = train_statistics.get_data_for_env(propertyName, episode, step, env)
+	if data is None:
+		logger.error(f"Property {propertyName} not found")
+		return JSONResponse(status_code=404, content={"message": f"Property {propertyName} not found"})
+	return JSONResponse(data)
+
+
 
 # initialize websocket connection
 @app.websocket("/ws/{client_id}")

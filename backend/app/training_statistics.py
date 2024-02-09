@@ -144,9 +144,9 @@ class TrainingStatistics:
 	def get_property_infos(self) -> dict[str, PropertyInfoNative]:
 		return {prop: self.get_property_info(prop) for prop in self.get_properties()}
 
-	def get_data_for_property(self, property_name: str) -> dict[int, dict[int, dict[int, EnvDataNative]]]:
+	def get_data_for_property(self, property_name: str) -> dict[int, dict[int, dict[int, EnvDataNative]]] | None:
 		if property_name not in self.properties:
-			return {}
+			return None
 		prop = self.properties[property_name]
 		data = {}
 		for episode, steps in prop.data.items():
@@ -157,26 +157,34 @@ class TrainingStatistics:
 					data[episode][step][env] = prop.data_to_native(env_data)
 		return data
 
-	def get_data_for_episode(self, property_name: str, episode: int) -> dict[int, dict[int, EnvDataNative]]:
+	def get_data_for_episode(self, property_name: str, episode: int) -> dict[int, dict[int, EnvDataNative]] | None:
 		if property_name not in self.properties:
-			return {}
+			return None
 		prop = self.properties[property_name]
 		data = {}
 		if episode not in prop.data:
-			return {}
+			return None
 		for step, envs in prop.data[episode].items():
 			data[step] = {}
 			for env, env_data in envs.items():
 				data[step][env] = prop.data_to_native(env_data)
 		return data
 
-	def get_data_for_step(self, property_name: str, episode: int, step: int) -> dict[int, EnvDataNative]:
+	def get_data_for_step(self, property_name: str, episode: int, step: int) -> dict[int, EnvDataNative] | None:
 		if property_name not in self.properties:
-			return {}
+			return None
 		prop = self.properties[property_name]
 		data = {}
 		if episode not in prop.data or step not in prop.data[episode]:
-			return {}
+			return None
 		for env, env_data in prop.data[episode][step].items():
 			data[env] = prop.data_to_native(env_data)
 		return data
+
+	def get_data_for_env(self, property_name: str, episode: int, step: int, env: int) -> EnvDataNative | None:
+		if property_name not in self.properties:
+			return None
+		prop = self.properties[property_name]
+		if episode not in prop.data or step not in prop.data[episode] or env not in prop.data[episode][step]:
+			return None
+		return prop.data_to_native(prop.data[episode][step][env])

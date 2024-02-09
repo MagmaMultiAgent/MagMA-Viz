@@ -2,8 +2,10 @@
     import { onMount, onDestroy } from 'svelte';
     import Chart from 'chart.js/auto';
 
+
     export let id;
     export let data;
+
 
     let chartData = {};
     let stepIDs = [];

@@ -7,57 +7,68 @@
     export let id;
     export let properties;
 
-    let displayMultipleSteps = false;
-    let selectedPropertyName = "";
-    let selectedVisualizationType = "";
-    let selectedVisualizationSubType = "";
-    let selectedSingleStepEpisode = "";
-    let selectedStep = "";
-    let selectedEnv = "";
-    let selectedMultipleStepMode = "";
-    let selectedMultipleStepEpisode = "";
+
+    let settings = {};
+    $: displayMultipleSteps = (settings && settings.main && settings.main.displayMultipleSteps) ? settings.main.displayMultipleSteps : false;
+    $: propertyName = (settings && settings.main && settings.main.propertyName) ? settings.main.propertyName : "";
+    $: visualizationType = (settings && settings.main && settings.main.visualizationType) ? settings.main.visualizationType : "";
+    $: visualizationSubType = (settings && settings.main && settings.main.visualizationSubType) ? settings.main.visualizationSubType : "";
 
     // Get data
     let data = {};
     $: {
-        if(!displayMultipleSteps) {
-            if(selectedPropertyName && selectedSingleStepEpisode && selectedStep) {
-                getDataForStep(selectedPropertyName, selectedSingleStepEpisode, selectedStep)
-                    .then(response => data = (selectedEnv in response) ? response[selectedEnv] : {})
+        data = {};
+        if(propertyName && settings && settings.step) {
+            if (!displayMultipleSteps) {
+                updateDataWithSingleStep(propertyName, settings.step.singleStep);
+            } else {
+                updateDataWithMultipleSteps(propertyName, settings.step.multipleStep);
+            }
+        }
+    }
+
+    function updateDataWithSingleStep(propertyName, settings) {
+        if(!propertyName || !settings) return;
+
+        let episode = settings.episode;
+        let step = settings.step;
+        let env = settings.env;
+        if(!episode || !step || !env) return;
+
+        getDataForStep(propertyName, episode, step)
+            .then(response => {
+                data = (env in response) ? response[env] : {};
+            })
+            .catch(error => console.error(error));
+    }
+
+    function updateDataWithMultipleSteps(propertyName, settings) {
+        if(!propertyName || !settings) return;
+
+        let mode = settings.mode;
+        if(!mode) return;
+
+        if(mode === "display all") {
+            if(propertyName) {
+                getAllData(propertyName)
+                    .then(response => {
+                        // TODO
+                    })
+                    .catch(error => console.error(error));
+            }
+        } else if(mode === "display episode") {
+            let episode = settings.episode;
+            if(!episode) return;
+
+            if(propertyName && episode) {
+                getDataForEpisode(propertyName, episode)
+                    .then(response => {
+                        data = response;
+                    })
                     .catch(error => console.error(error));
             }
         } else {
-            if(selectedMultipleStepMode === "display all") {
-                if(selectedPropertyName) {
-                    getAllData(selectedPropertyName)
-                        .then(response => {
-                            let _data = {};
-                            for(let episodeID in response) {
-                                for(let stepID in response[episodeID]) {
-                                    if(!(stepID in _data)) {
-                                        _data[stepID] = {};
-                                    }
-                                    for(let envID in response[episodeID][stepID]) {
-                                        if(!(envID in _data[stepID])) {
-                                            _data[stepID][envID] = [];
-                                        }
-                                        _data[stepID][envID].push(response[episodeID][stepID][envID]);
-                                    }
-                                }
-                            }
-                            data = _data;
-                        })
-                        .catch(error => console.error(error));
-                }
-            } else if(selectedMultipleStepMode === "display episode") {
-                if(selectedPropertyName && selectedMultipleStepEpisode) {
-                    getDataForEpisode(selectedPropertyName, selectedMultipleStepEpisode)
-                        .then(response => data = response)
-                        .catch(error => console.error(error));
-                }
-            } else {
-                data = {};
-            }
+            data = {};
         }
     }
 
@@ -65,27 +76,12 @@
 
 <div class="container">
 
-    <Settings
-        {properties} bind:selectedPropertyName={selectedPropertyName} bind:displayMultipleSteps={displayMultipleSteps}
-        bind:selectedVisualizationType={selectedVisualizationType} bind:selectedVisualizationSubType={selectedVisualizationSubType}
-        bind:selectedSingleStepEpisode={selectedSingleStepEpisode} bind:selectedStep={selectedStep} bind:selectedEnv={selectedEnv}
-        bind:selectedMultipleStepMode={selectedMultipleStepMode} bind:selectedMultipleStepEpisode={selectedMultipleStepEpisode}
-    />
+    <Settings {properties} bind:settings={settings} />
 
-    <Visualization {id} {data} {selectedVisualizationType} {selectedVisualizationSubType} />
+    <Visualization {id} {data} {visualizationType} {visualizationSubType} />
 </div>
 
 <style>
-    .id {
-        position: absolute;
-        top: 0;
-        left: 0;
-        font-size: 10px;
-        margin: 0;
-        padding: 0;
-        border: 0;
-    }
-
     .container {
         width: 100%;
         height: 100%;

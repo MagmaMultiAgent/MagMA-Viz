@@ -1,16 +1,17 @@
 <script>
-    import {ValueBoard} from "./ValueBoard.js";
-    import {GrayScaleBoard} from "./GrayScaleBoard.js";
-    import {RGBBoard} from "./RGBBoard.js";
+    import {ValueBoard} from "./ValueBoard/ValueBoard.js";
+    import {GrayScaleBoard} from "./GrayScaleBoard/GrayScaleBoard.js";
+    import {RGBBoard} from "./RGBBoard/RGBBoard.js";
+
 
     export let data;
-    export let selectedVisualizationSubType;
+    export let visualizationSubType;
 </script>
 
-{#if selectedVisualizationSubType === "values"}
+{#if visualizationSubType === "values"}
     <ValueBoard data={data} />
-{:else if selectedVisualizationSubType === "RGBMap"}
+{:else if visualizationSubType === "RGBMap"}
     <RGBBoard data={data} />
-{:else if selectedVisualizationSubType === "GrayscaleMap"}
+{:else if visualizationSubType === "GrayscaleMap"}
     <GrayScaleBoard data={data} />
 {/if}
