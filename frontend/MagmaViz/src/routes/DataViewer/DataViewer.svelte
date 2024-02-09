@@ -52,7 +52,19 @@
             if(propertyName) {
                 getAllData(propertyName)
                     .then(response => {
-                        // TODO
+                        let _data = {}
+                        for (let episodeID in response) {
+                            let episode = response[episodeID];
+                            for (let stepID in episode) {
+                                if (stepID in _data) {
+                                    console.error("Duplicate stepID in response");
+                                    return;
+                                }
+
+                                _data[stepID] = episode[stepID];
+                            }
+                        }
+                        data = _data;
                     })
                     .catch(error => console.error(error));
             }

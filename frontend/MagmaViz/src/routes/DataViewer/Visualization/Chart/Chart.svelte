@@ -1,5 +1,6 @@
 <script>
     import { onMount, onDestroy } from 'svelte';
+    import { getRGBFromHash } from "$lib/utils.js";
     import Chart from 'chart.js/auto';
 
 
@@ -9,6 +10,7 @@
 
     let chartData = {};
     let stepIDs = [];
+    let chartName = "chart_" + id.toString();
 
     function generateChartData(data) {
         if (!data || data.constructor !== Object) {
@@ -37,16 +39,16 @@
     onMount(() => {
         generateChartData();
 
-        const ctx = document.getElementById("chart_"+id.toString()).getContext('2d');
+        const ctx = document.getElementById(chartName).getContext('2d');
         chart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: stepIDs,
                 datasets: Object.values(chartData).map((data, index) => ({
-                    label: `Line ${index + 1}`,
+                    label: `Env ${index + 1}`,
                     data: data,
                     fill: false,
-                    borderColor: getRandomColor(),
+                    borderColor: getRGBFromHash(chartName + index.toString()),
                     tension: 0.1
                 }))
             },
@@ -66,15 +68,6 @@
         }
     });
 
-    function getRandomColor() {
-        const letters = '0123456789ABCDEF';
-        let color = '#';
-        for (let i = 0; i < 6; i++) {
-            color += letters[Math.floor(Math.random() * 16)];
-        }
-        return color;
-    }
-
     $: {
         generateChartData(data);
         if (chart) {
@@ -83,7 +76,7 @@
                 label: `Line ${index + 1}`,
                 data: data,
                 fill: false,
-                borderColor: getRandomColor(),
+                borderColor: getRGBFromHash(chartName + index.toString()),
                 tension: 0.1
             }));
             chart.update();
@@ -91,4 +84,4 @@
     }
 </script>
 
-<canvas id="chart_{id}"></canvas>
+<canvas id="{chartName}"></canvas>
