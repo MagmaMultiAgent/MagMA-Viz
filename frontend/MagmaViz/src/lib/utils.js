@@ -60,3 +60,18 @@ export function getRGBFromHash(string) {
 
     return `rgb(${red}, ${green}, ${blue})`;
 }
+
+export const localStoragePrefixBase = "MagmaViz";
+
+export function saveToLocalStorage(prefix, name, value) {
+    localStorage.setItem(`${localStoragePrefixBase}$${prefix}$${name}`, value);
+}
+
+export function getFromLocalStorage(prefix, name) {
+    return localStorage.getItem(`${localStoragePrefixBase}$${prefix}$${name}`);
+}
+
+export function getKeysFromLocalStorage(prefix) {
+    prefix = `${localStoragePrefixBase}$${prefix}$`;
+    return Object.keys(localStorage).filter(key => key.startsWith(prefix)).map(key => key.replace(prefix, ""));
+}

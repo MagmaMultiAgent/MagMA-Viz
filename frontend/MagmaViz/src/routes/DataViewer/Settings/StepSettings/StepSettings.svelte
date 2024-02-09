@@ -6,21 +6,23 @@
     export let episodes;
     export let displayMultipleSteps;
 
-    export let settings = {
-        "singleStep": {},
-        "multipleStep": {}
-    };
+    export let settings;
+
+
+    $: {
+        if(settings === undefined) {
+            settings = {};
+        }
+    }
 </script>
 <div class="container">
     {#if displayMultipleSteps}
         <MultipleStep
-            {displayMultipleSteps}
             {episodes}
             bind:settings={settings.multipleStep}
         ></MultipleStep>
     {:else}
         <SingleStep
-            {displayMultipleSteps}
             {episodes}
             bind:settings={settings.singleStep}
         ></SingleStep>

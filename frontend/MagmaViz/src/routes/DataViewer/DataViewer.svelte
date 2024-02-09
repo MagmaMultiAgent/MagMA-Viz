@@ -6,9 +6,9 @@
 
     export let id;
     export let properties;
+    export let settings;
 
 
-    let settings = {};
     $: displayMultipleSteps = (settings && settings.main && settings.main.displayMultipleSteps) ? settings.main.displayMultipleSteps : false;
     $: propertyName = (settings && settings.main && settings.main.propertyName) ? settings.main.propertyName : "";
     $: visualizationType = (settings && settings.main && settings.main.visualizationType) ? settings.main.visualizationType : "";
@@ -37,9 +37,14 @@
 
         getDataForStep(propertyName, episode, step)
             .then(response => {
+                if(!response || response.message) return;
+
                 data = (env in response) ? response[env] : {};
             })
-            .catch(error => console.error(error));
+            .catch(error => {
+                console.error(error);
+                data = {};
+            });
     }
 
     function updateDataWithMultipleSteps(propertyName, settings) {
@@ -52,6 +57,8 @@
             if(propertyName) {
                 getAllData(propertyName)
                     .then(response => {
+                        if(!response || response.message) return;
+
                         let _data = {}
                         for (let episodeID in response) {
                             let episode = response[episodeID];
@@ -66,7 +73,10 @@
                         }
                         data = _data;
                     })
-                    .catch(error => console.error(error));
+                    .catch(error => {
+                        console.error(error);
+                        data = {};
+                    });
             }
         } else if(mode === "display episode") {
             let episode = settings.episode;
@@ -75,9 +85,14 @@
             if(propertyName && episode) {
                 getDataForEpisode(propertyName, episode)
                     .then(response => {
+                        if(!response || response.message) return;
+
                         data = response;
                     })
-                    .catch(error => console.error(error));
+                    .catch(error => {
+                        console.error(error);
+                        data = {};
+                    });
             }
         } else {
             data = {};
@@ -87,7 +102,6 @@
 </script>
 
 <div class="container">
-
     <Settings {properties} bind:settings={settings} />
 
     <Visualization {id} {data} {visualizationType} {visualizationSubType} />

@@ -1,18 +1,22 @@
 <script>
     import { onMount, onDestroy } from 'svelte';
-    import { id, connectWebSocket } from "$lib/utils.js";
+    import { id, connectWebSocket, getKeysFromLocalStorage, saveToLocalStorage, getFromLocalStorage } from "$lib/utils.js";
     import { DataViewer } from "./DataViewer/DataViewer.js";
     import { Header } from "./Header/Header.js";
 
     let properties = {};
 
     let ws;
+    let initDone = false;
     onMount(() => {
         ws = connectWebSocket();
         ws.onmessage = function(event) {
             console.log("Received data");
             properties = JSON.parse(event.data);
         };
+
+        initDone = true;
+        configs = getSavedConfigs();
     });
     onDestroy(() => {
         if (ws === undefined) {
@@ -21,10 +25,64 @@
         ws.close();
     });
 
-    let items = [id()];
+    let items = [];
 
     function addVisualization() {
-        items = [...items, id()];
+        let newVisualization = [id(), {}];
+        items = [...items, newVisualization];
+    }
+
+    let config = "";
+    let configs = [];
+    $: {
+        loadItems(config);
+    }
+
+    let saveConfigName = "";
+
+    function saveItems(name) {
+        if(name === "" || !items || !initDone) {
+            return;
+        }
+
+        let itemsJSON = JSON.stringify(items.map(([_, settings]) => settings));
+        if(!itemsJSON) {
+            return;
+        }
+
+        console.log("Saving config with name " + name);
+        saveToLocalStorage(`items`, name, itemsJSON);
+        configs = getSavedConfigs();
+    }
+
+    function loadItems(name) {
+        if(name === "" || !initDone) {
+            console.log("Init not done yet, not loading config");
+            return;
+        }
+
+        let itemsJSON = getFromLocalStorage(`items`, name);
+        if(!itemsJSON) {
+            console.log("No items found in local storage under key " + name);
+            return;
+        }
+
+        console.log("Loading config with name " + name);
+        let _items = JSON.parse(itemsJSON);
+        items = [];
+        for (let i = 0; i < _items.length; i++) {
+            addVisualization();
+            items[i][1] = _items[i];
+        }
+    }
+
+    function getSavedConfigs() {
+        if(!initDone) {
+            console.log("Init not done yet, no saved configs");
+            return [];
+        }
+
+        return getKeysFromLocalStorage("items");
     }
 
 </script>
@@ -33,11 +91,27 @@
 
 <div id="settings">
     <button on:click={addVisualization}>Add visualization</button>
+
+    <div id="configs">
+        <label for="configSelector">Configs:</label>
+
+        <select id="configSelector" bind:value={config}>
+            {#each configs as config}
+                <option value={config}>{config}</option>
+            {/each}
+        </select>
+
+        <button on:click={() => loadItems(config)}>Load</button>
+
+        <input type="text" bind:value={saveConfigName} placeholder="New config name..." />
+
+        <button on:click={() => saveItems(saveConfigName)}>Save</button>
+    </div>
 </div>
 
 <div class="grid-container">
-    {#each Object.entries(items) as [ind, item]}
-        <DataViewer {properties} id={item} />
+    {#each Object.entries(items) as [ind, [id, settings]]}
+        <DataViewer {properties} id={id} bind:settings={settings} />
     {/each}
 </div>
 
@@ -71,15 +145,29 @@
         color: black;
     }
 
-    #settings {
+    #settings, #configs {
         display: flex;
         flex-direction: row;
         align-items: center;
         margin-left: 10px;
     }
 
-    #settings button {
+    #settings {
+        position: relative;
+    }
+
+    #configs {
+        position: absolute;
+        right: 0;
+    }
+
+    #settings *, #configs * {
         margin-right: 5px;
+        color: black;
+    }
+
+    #settings select {
+        background-color: darkgray;
     }
 
     .grid-container {
@@ -95,6 +183,10 @@
         margin: 0;
         padding: 0;
         border: 0;
+    }
+
+    input::-webkit-input-placeholder, input:-moz-placeholder {
+        color: darkgray;
     }
 
 </style>

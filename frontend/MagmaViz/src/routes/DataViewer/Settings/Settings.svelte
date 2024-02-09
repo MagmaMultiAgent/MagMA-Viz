@@ -6,33 +6,61 @@
 
     export let properties;
 
-    export let settings = {};
+    export let settings;
 
-
-    let mainSettings = {};
-    let stepSettings = {};
-    $: propertyName = (mainSettings && mainSettings.propertyName) ? mainSettings.propertyName : "";
-    $: visualizationType = (mainSettings && mainSettings.visualizationType) ? mainSettings.visualizationType : "";
-    $: settings.main = {...mainSettings};
-    $: settings.step = {...stepSettings};
 
     $: propertyNames = Object.keys(properties);
-    $: propertyInfo = propertyName in properties ? properties[propertyName] : {};
-    $: episodes = "step_ids" in propertyInfo ? propertyInfo["step_ids"] : {};
-    $: visualizationInfo = (visualizationType in visualizationTypes) ? visualizationTypes[visualizationType] : {};
-    $: displayMultipleSteps = "displayMultipleSteps" in visualizationInfo ? visualizationInfo["displayMultipleSteps"] : false;
-    $: settings.main = {...settings.main, "displayMultipleSteps": displayMultipleSteps};
+    let propertyName = "";
+    let visualizationType = "";
+    let propertyInfo = {};
+    let episodes = {};
+    let visualizationInfo = {};
+    let displayMultipleSteps = false;
+    $: {
+        console.log("Settings")
+
+        if(settings === undefined)
+        {
+            settings = {};
+        }
+
+        if(settings && settings.main)
+        {
+            if(settings.main.propertyName && settings.main.propertyName !== propertyName) {
+                propertyName = settings.main.propertyName;
+            }
+            if(settings.main.visualizationType && settings.main.visualizationType !== visualizationType) {
+                visualizationType = settings.main.visualizationType;
+            }
+        }
+        if(visualizationTypes[visualizationType] && visualizationInfo !== visualizationTypes[visualizationType]) {
+            visualizationInfo = visualizationTypes[visualizationType];
+        }
+        if(visualizationInfo && visualizationInfo.displayMultipleSteps !== undefined && visualizationInfo.displayMultipleSteps !== displayMultipleSteps) {
+            if(displayMultipleSteps !== visualizationInfo.displayMultipleSteps) {
+                displayMultipleSteps = visualizationInfo.displayMultipleSteps;
+            }
+            if(settings.main.displayMultipleSteps !== visualizationInfo.displayMultipleSteps) {
+                settings.main.displayMultipleSteps = visualizationInfo.displayMultipleSteps;
+            }
+        }
+    }
+    $: {
+        propertyInfo = properties[propertyName] ? properties[propertyName] : {};
+        episodes = propertyInfo["step_ids"] ? propertyInfo["step_ids"] : {};
+    }
 </script>
 
 <div class="container">
     <MainSettings
         {propertyNames}
-        bind:settings={mainSettings}
+        {visualizationInfo}
+        bind:settings={settings.main}
     ></MainSettings>
     <StepSettings
         {episodes}
         {displayMultipleSteps}
-        bind:settings={stepSettings}
+        bind:settings={settings.step}
     ></StepSettings>
 </div>
 

@@ -2,87 +2,117 @@
     import {onMount} from "svelte";
 
 
-    export let displayMultipleSteps;
     export let episodes;
 
-    export let settings = {};
+    export let settings;
 
-
-    let episode = "";
-    let step = "";
-    let env = "";
 
     let slider;
     onMount(() => {
-        if (slider && step !== "") {
-            slider.value = parseInt(step);
+        if (slider && settings && settings.step) {
+            slider.value = parseInt(settings.step);
         }
     });
 
     $: episodeIDs = Object.keys(episodes);
-    $: settings = {
-        "episode": episode,
-        "step": step,
-        "env": env
-    };
-    $ : {
-        if(displayMultipleSteps) {
-            episode = "";
-        } else if (!episodeIDs.includes(episode)) {
-            episode = episodeIDs[0];
-        }
-    }
-    $: steps = (episode in episodes) ? episodes[episode] : {};
-    $: stepIDs = Object.keys(steps);
-    // stepIDs are in string
-    $: maxStep = Math.max(...stepIDs.map(Number), 0);
-    $: minStep = Math.min(...stepIDs.map(Number), maxStep);
+    let steps = {};
+    let stepIDs = [];
+    let envIDs = [];
+    let maxStep = 0;
+    let minStep = 0;
     $: {
-        if (stepIDs.length <= 0) {
-            step = "";
-        } else if (!stepIDs.includes(step)) {
-            step = stepIDs[0];
+        if(settings === undefined) {
+            settings = {};
+        }
+        if(settings.episode === undefined) {
+            settings.episode = "";
+        }
+        if(settings.step === undefined) {
+            settings.step = "";
+        }
+        if(settings.env === undefined) {
+            settings.env = "";
         }
     }
     $: {
-        if (slider && step !== "") {
-            slider.value = parseInt(step);
+        if(settings && settings.episode !== undefined && episodes && settings.episode in episodes && episodes[settings.episode] !== steps) {
+            steps = episodes[settings.episode];
+            stepIDs = Object.keys(steps);
+            maxStep = Math.max(...stepIDs.map(Number), 0);
+            minStep = Math.min(...stepIDs.map(Number), maxStep);
         }
     }
-    $: envIDs = (step in steps) ? steps[step] : [];
+    $: {
+        if(settings && settings.step && steps && settings.step in steps && steps[settings.step] !== envIDs) {
+            envIDs = steps[settings.step];
+        }
+    }
+    $: {
+        if (slider && settings && settings.step !== "") {
+            slider.value = parseInt(settings.step);
+        }
+    }
 
     function updateStep(event) {
-        step = event.target.value.toString();
+        if(!settings) {
+            return;
+        }
+
+        settings.step = event.target.value.toString();
+    }
+
+    function incrementStep() {
+        if(!settings) {
+            return;
+        }
+
+        if(parseInt(settings.step) >= maxStep) {
+            return;
+        }
+
+        settings.step = (parseInt(settings.step) + 1).toString();
+    }
+
+    function decrementStep() {
+        if(!settings) {
+            return;
+        }
+
+        if(parseInt(settings.step) <= minStep) {
+            return;
+        }
+
+        settings.step = (parseInt(settings.step) - 1).toString();
     }
 </script>
 
 <div class="container">
     <div class="top-row">
         <label for="episodeSelector">Episode:</label>
-        <select id="episodeSelector" name="episodeSelector" bind:value="{episode}">
+        <select id="episodeSelector" name="episodeSelector" bind:value="{settings.episode}">
             {#each episodeIDs as episodeID}
                 <option value="{episodeID}">{episodeID}</option>
             {/each}
         </select>
 
         <label for="stepSelector">Step:</label>
-        <select id="stepSelector" name="stepSelector" bind:value="{step}">
+        <select id="stepSelector" name="stepSelector" bind:value="{settings.step}">
             {#each stepIDs as stepID}
                 <option value="{stepID}">{stepID}</option>
             {/each}
         </select>
 
         <label for="envSelector">Environment:</label>
-        <select id="envSelector" name="envSelector" bind:value="{env}">
+        <select id="envSelector" name="envSelector" bind:value="{settings.env}">
             {#each envIDs as envID}
                 <option value="{envID}">{envID}</option>
             {/each}
         </select>
     </div>
     <div class="bottom-row">
-        <button on:click={() => step = (parseInt(step) - 1).toString()} class="button">-</button>
+        <button on:click={() => decrementStep()} class="button">-</button>
         <input type="range" min="{minStep}" max="{maxStep}" bind:this={slider} on:input={updateStep} class="slider" id="step-slider">
-        <button on:click={() => step = (parseInt(step) + 1).toString()} class="button">+</button>
+        <button on:click={() => incrementStep()} class="button">+</button>
     </div>
 </div>
 

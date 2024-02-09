@@ -4,40 +4,46 @@
 
 
     export let propertyNames;
+    export let visualizationInfo;
 
-    export let settings = {};
+    export let settings;
 
 
-    let propertyName = "";
-    let visualizationType = "";
-    let visualizationSubType = "";
-
-    $: settings = {
-        "propertyName": propertyName,
-        "visualizationType": visualizationType,
-        "visualizationSubType": visualizationSubType
-    };
-    $: visualizationInfo = (visualizationType in visualizationTypes) ? visualizationTypes[visualizationType] : {};
-    $: visualizationSubTypes = ("subTypes" in visualizationInfo) ? visualizationInfo["subTypes"] : [];
-
+    let visualizationSubTypes = [];
     $: {
-        if (visualizationSubTypes.length > 0 && !visualizationSubTypes.includes(visualizationSubType)) {
-            visualizationSubType = visualizationSubTypes[0];
+        console.log("Main");
+
+        if (settings === undefined) {
+            settings = {};
+        }
+        if(settings.propertyName === undefined) {
+            settings.propertyName = "";
+        }
+        if(settings.visualizationType === undefined) {
+            settings.visualizationType = "";
+        }
+        if(settings.visualizationSubType === undefined) {
+            settings.visualizationSubType = "";
         }
     }
-
+    $: visualizationSubTypes = visualizationInfo["subTypes"] ? visualizationInfo["subTypes"] : [];
+    $: {
+        if(visualizationSubTypes.length > 0 && visualizationSubTypes && !visualizationSubTypes.includes(settings.visualizationSubType)) {
+            settings.visualizationSubType = visualizationSubTypes[0];
+        }
+    }
 </script>
 
 <div class="container">
     <label for="propertySelector">Property:</label>
-    <select id="propertySelector" name="propertySelector" bind:value="{propertyName}">
+    <select id="propertySelector" name="propertySelector" bind:value="{settings.propertyName}">
         {#each ["", ...propertyNames] as propertyName}
             <option value="{propertyName}">{getValueOrNone(propertyName)}</option>
         {/each}
     </select>
 
     <label for="visualizationTypeSelector">Type:</label>
-    <select id="visualizationTypeSelector" name="visualizationTypeSelector" bind:value="{visualizationType}">
+    <select id="visualizationTypeSelector" name="visualizationTypeSelector" bind:value="{settings.visualizationType}">
         {#each ["", ...Object.keys(visualizationTypes)] as visualizationType}
             <option value="{visualizationType}">{getValueOrNone(visualizationType)}</option>
         {/each}
@@ -45,7 +51,7 @@
 
     {#if visualizationSubTypes.length > 0}
         <label for="visualizationSubTypeSelector">Sub Type:</label>
-        <select id="visualizationSubTypeSelector" name="visualizationSubTypeSelector" bind:value="{visualizationSubType}">
+        <select id="visualizationSubTypeSelector" name="visualizationSubTypeSelector" bind:value="{settings.visualizationSubType}">
             {#each visualizationSubTypes as visualizationSubType}
                 <option value="{visualizationSubType}">{visualizationSubType}</option>
             {/each}
