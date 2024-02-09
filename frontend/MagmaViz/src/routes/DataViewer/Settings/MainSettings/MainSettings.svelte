@@ -36,7 +36,7 @@
         {/each}
     </select>
 
-    <label for="visualizationTypeSelector">Visualization Type:</label>
+    <label for="visualizationTypeSelector">Type:</label>
     <select id="visualizationTypeSelector" name="visualizationTypeSelector" bind:value="{visualizationType}">
         {#each ["", ...Object.keys(visualizationTypes)] as visualizationType}
             <option value="{visualizationType}">{getValueOrNone(visualizationType)}</option>
@@ -44,7 +44,7 @@
     </select>
 
     {#if visualizationSubTypes.length > 0}
-        <label for="visualizationSubTypeSelector">Visualization Sub Type:</label>
+        <label for="visualizationSubTypeSelector">Sub Type:</label>
         <select id="visualizationSubTypeSelector" name="visualizationSubTypeSelector" bind:value="{visualizationSubType}">
             {#each visualizationSubTypes as visualizationSubType}
                 <option value="{visualizationSubType}">{visualizationSubType}</option>
@@ -54,6 +54,16 @@
 </div>
 
 <style>
+    * {
+        background-color: dimgray;
+        color: white;
+    }
+
+    select, option {
+        background-color: darkgray;
+        color: black;
+    }
+
     .container {
         display: flex;
         flex-direction: row;

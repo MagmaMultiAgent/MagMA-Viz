@@ -94,6 +94,11 @@
 </div>
 
 <style>
+    * {
+        background-color: dimgray;
+        color: white;
+    }
+
     .container {
         width: 100%;
         height: 100%;
@@ -104,5 +109,6 @@
         justify-content: center;
         border: 1px solid black;
         position: relative;
+        border-radius: 10px;
     }
 </style>

@@ -87,6 +87,16 @@
 </div>
 
 <style>
+    * {
+        background-color: dimgray;
+        color: white;
+    }
+
+    select, option, button {
+        background-color: darkgray;
+        color: black;
+    }
+
     .container{
         display: flex;
         flex-direction: column;

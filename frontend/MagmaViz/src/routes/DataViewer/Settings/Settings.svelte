@@ -37,6 +37,11 @@
 </div>
 
 <style>
+    * {
+        background-color: dimgray;
+        color: white;
+    }
+
     .container {
         display: flex;
         flex-direction: column;

@@ -54,9 +54,9 @@ export function getRGBFromHash(string) {
     let green_hash = hashCode(string + "_green");
     let blue_hash = hashCode(string + "_blue");
 
-    let red = Math.abs(red_hash % 256);
-    let green = Math.abs(green_hash % 256);
-    let blue = Math.abs(blue_hash % 256);
+    let red = Math.abs(red_hash % 224);
+    let green = Math.abs(green_hash % 224);
+    let blue = Math.abs(blue_hash % 224);
 
     return `rgb(${red}, ${green}, ${blue})`;
 }

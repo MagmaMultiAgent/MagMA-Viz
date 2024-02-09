@@ -50,6 +50,16 @@
 </div>
 
 <style>
+    * {
+        background-color: dimgray;
+        color: white;
+    }
+
+    select, option {
+        background-color: darkgray;
+        color: black;
+    }
+
     .container {
         display: flex;
         flex-direction: row;

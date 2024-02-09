@@ -45,7 +45,7 @@
             data: {
                 labels: stepIDs,
                 datasets: Object.values(chartData).map((data, index) => ({
-                    label: `Env ${index + 1}`,
+                    label: `Env ${index}`,
                     data: data,
                     fill: false,
                     borderColor: getRGBFromHash(chartName + index.toString()),
@@ -53,9 +53,24 @@
                 }))
             },
             options: {
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                },
                 scales: {
+                    x: {
+                        ticks: {
+                            color: 'white'
+                        }
+                    },
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        ticks: {
+                            color: 'white'
+                        }
                     }
                 }
             }
@@ -73,7 +88,7 @@
         if (chart) {
             chart.data.labels = stepIDs;
             chart.data.datasets = Object.values(chartData).map((data, index) => ({
-                label: `Line ${index + 1}`,
+                label: `Env ${index}`,
                 data: data,
                 fill: false,
                 borderColor: getRGBFromHash(chartName + index.toString()),
