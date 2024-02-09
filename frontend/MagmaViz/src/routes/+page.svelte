@@ -1,14 +1,13 @@
 <script>
     import { onMount, onDestroy } from 'svelte';
-    import { id } from "$lib/utils.js";
+    import { id, connectWebSocket } from "$lib/utils.js";
     import { DataViewer } from "./DataViewer/DataViewer.js";
 
     let properties = {};
 
     let ws;
     onMount(() => {
-        let clientId = Date.now();
-        ws = new WebSocket(`ws://localhost:8000/ws/${clientId}`);
+        ws = connectWebSocket();
         ws.onmessage = function(event) {
             console.log("Received data");
             properties = JSON.parse(event.data);

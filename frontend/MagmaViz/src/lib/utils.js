@@ -8,6 +8,25 @@ export async function GET(url) {
     }
 }
 
+export const HOST = "localhost:8000";
+export const WS_URL = `ws://${HOST}/ws`;
+export const API_URL = `http://${HOST}/api`;
+
+export function connectWebSocket() {
+    const clientId = Date.now();
+    const ws = new WebSocket(`${WS_URL}/${clientId}`);
+    ws.onopen = () => {
+        console.log("websocket connected");
+    };
+    ws.onclose = () => {
+        console.log("websocket disconnected");
+    };
+    ws.onerror = (error) => {
+        console.log("error", error);
+    };
+    return ws;
+}
+
 export function checkIfNaN(value, default_value = -1) {
     if (isNaN(value)) {
         return default_value;
