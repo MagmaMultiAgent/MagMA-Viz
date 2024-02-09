@@ -11,8 +11,6 @@
 
     let visualizationSubTypes = [];
     $: {
-        console.log("Main");
-
         if (settings === undefined) {
             settings = {};
         }

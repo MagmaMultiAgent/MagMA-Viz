@@ -8,6 +8,12 @@
     export let properties;
     export let settings;
 
+    export function triggerUpdate() {
+        if(settings) {
+            updateData(propertyName, settings.step, displayMultipleSteps);
+        }
+    }
+
 
     $: displayMultipleSteps = (settings && settings.main && settings.main.displayMultipleSteps) ? settings.main.displayMultipleSteps : false;
     $: propertyName = (settings && settings.main && settings.main.propertyName) ? settings.main.propertyName : "";
@@ -17,12 +23,20 @@
     // Get data
     let data = {};
     $: {
+        if(settings) {
+            updateData(propertyName, settings.step, displayMultipleSteps);
+        }
+    }
+
+    function updateData(propertyName, stepSettings, displayMultipleSteps) {
+        if(!propertyName || !stepSettings) return;
+
         data = {};
-        if(propertyName && settings && settings.step) {
+        if(propertyName && stepSettings) {
             if (!displayMultipleSteps) {
-                updateDataWithSingleStep(propertyName, settings.step.singleStep);
+                updateDataWithSingleStep(propertyName, stepSettings.singleStep);
             } else {
-                updateDataWithMultipleSteps(propertyName, settings.step.multipleStep);
+                updateDataWithMultipleSteps(propertyName, stepSettings.multipleStep);
             }
         }
     }
@@ -102,6 +116,12 @@
 </script>
 
 <div class="container">
+    <button class="refresh" on:click={() => {
+        if(settings) {
+            updateData(propertyName, settings.step, displayMultipleSteps);
+        }
+    }}>⟳</button>
+
     <Settings {properties} bind:settings={settings} />
 
     <Visualization {id} {data} {visualizationType} {visualizationSubType} />
@@ -124,5 +144,11 @@
         border: 1px solid black;
         position: relative;
         border-radius: 10px;
+    }
+
+    .refresh {
+        position: absolute;
+        top: 5px;
+        left: 5px;
     }
 </style>

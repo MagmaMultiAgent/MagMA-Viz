@@ -11,7 +11,6 @@
     onMount(() => {
         ws = connectWebSocket();
         ws.onmessage = function(event) {
-            console.log("Received data");
             properties = JSON.parse(event.data);
         };
 
@@ -85,12 +84,48 @@
         return getKeysFromLocalStorage("items");
     }
 
+    let dataViewers = [];
+    function refreshAll() {
+        for (let i = 0; i < dataViewers.length; i++) {
+            dataViewers[i].triggerUpdate();
+        }
+    }
+
+    let refreshInterval = undefined;
+    function setRefreshPeriod(event) {
+        if(!initDone) {
+            console.log("Init not done yet, not setting refresh period");
+            return;
+        }
+        if(event.target.value) {
+            console.log("Setting refresh period to " + event.target.value);
+        }
+        if(refreshInterval !== undefined) {
+            clearInterval(refreshInterval);
+        }
+        if(!event.target.value) {
+            console.log("Refresh period cleared");
+            return;
+        }
+        let minutes = parseInt(event.target.value);
+        refreshInterval = setInterval(refreshAll, minutes * 60 * 1000);
+    }
+
 </script>
 
 <Header/>
 
 <div id="settings">
     <button on:click={addVisualization}>Add visualization</button>
+    <button on:click={refreshAll}>Refresh All</button>
+    <label for="refreshPeriodSelector">Refresh periodically:</label>
+    <select id="refreshPeriodSelector" on:change={setRefreshPeriod}>
+        <option value="">none</option>
+        <option value="1">1 minute</option>
+        <option value="2">2 minutes</option>
+        <option value="5">5 minutes</option>
+        <option value="10">10 minutes</option>
+    </select>
 
     <div id="configs">
         <label for="configSelector">Configs:</label>
@@ -111,7 +146,7 @@
 
 <div class="grid-container">
     {#each Object.entries(items) as [ind, [id, settings]]}
-        <DataViewer {properties} id={id} bind:settings={settings} />
+        <DataViewer {properties} id={id} bind:settings={settings} bind:this={dataViewers[ind]} />
     {/each}
 </div>
 

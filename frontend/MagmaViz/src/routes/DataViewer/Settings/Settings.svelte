@@ -17,8 +17,6 @@
     let visualizationInfo = {};
     let displayMultipleSteps = false;
     $: {
-        console.log("Settings")
-
         if(settings === undefined)
         {
             settings = {};
