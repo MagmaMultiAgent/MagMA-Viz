@@ -93,6 +93,17 @@ async def get_data_for_env(propertyName: str, episode: int, step: int,  env: int
 		data = {}
 	return JSONResponse(data)
 
+@app.post("/api/saveData")
+async def save_data():
+	global logger
+	logger.info("Saving data")
+	train_statistics.save()
+
+@app.post("/api/loadData")
+async def load_data(name: str):
+	global logger
+	logger.info("Loading data")
+	train_statistics.load(name)
 
 
 # initialize websocket connection

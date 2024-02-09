@@ -8,6 +8,21 @@ export async function GET(url) {
     }
 }
 
+export async function POST(url) {
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        throw error;
+    }
+}
+
 export const HOST = "localhost:8000";
 export const WS_URL = `ws://${HOST}/ws`;
 export const API_URL = `http://${HOST}/api`;

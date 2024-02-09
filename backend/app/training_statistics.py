@@ -1,19 +1,22 @@
 import gzip
 import pickle
+import threading
 
 import numpy as np
 
 import re
 
 from backend.utils.types import EnvData, EnvDataNative, PropertyData, PropertyInfoNative, TrainingDataBatch, PossibleDTypes, PossibleDataTypes, InferredDataType
+from backend.app.persistence.persistence import FilePersistence
 
 
 class Property:
-	def __init__(self, name: str, dimension: tuple[int], inferred_data_type: InferredDataType, dtype: str):
+	def __init__(self, name: str, dimension: tuple[int], inferred_data_type: InferredDataType, dtype: str, file_name: str):
 		self.name = name
 		self.dimension = dimension
 		self.inferred_data_type = inferred_data_type
 		self.dtype = dtype
+		self.file_name = file_name
 		self.data: PropertyData = {}
 
 	@staticmethod
@@ -23,13 +26,15 @@ class Property:
 			"tags": data_element["tags"],
 			"dimension": list(data_element["dimension"]),
 			"inferred_data_type": data_element["inferred_data_type"].name,
-			"dtype": data_element["dtype"]
+			"dtype": data_element["dtype"],
+			"file_name": data_element["file_name"]
 		}
 
-	def add(self, env: int, episode: int, step: int, tags: list[str], data: PossibleDataTypes, dimension: tuple[int], inferred_data_type: InferredDataType, dtype: str):
+	def add(self, env: int, episode: int, step: int, tags: list[str], data: PossibleDataTypes, dimension: tuple[int], inferred_data_type: InferredDataType, dtype: str, file_name: str):
 		assert dimension == self.dimension, f"Dimension {dimension} does not match the expected dimension {self.dimension}"
 		assert inferred_data_type == self.inferred_data_type, f"Inferred visualization type {inferred_data_type} does not match the expected type {self.inferred_data_type}"
 		assert dtype == self.dtype, f"Data type {dtype} does not match the expected type {self.dtype}"
+		assert file_name == self.file_name, f"File name {file_name} does not match the expected file name {self.file_name}"
 
 		if episode not in self.data:
 			self.data[episode] = {}
@@ -40,7 +45,8 @@ class Property:
 			"tags": tags,
 			"dimension": dimension,
 			"inferred_data_type": inferred_data_type,
-			"dtype": dtype
+			"dtype": dtype,
+			"file_name": file_name
 		}
 
 	def get_step_ids(self) -> dict[int, dict[int, list[int]]]:
@@ -54,6 +60,8 @@ class Property:
 class TrainingStatistics:
 	def __init__(self):
 		self.properties = {}
+		self.persistence = FilePersistence()
+		self.add_counter = 0
 
 	@staticmethod
 	def decompress_data_to_send(received: bytes) -> TrainingDataBatch:
@@ -104,6 +112,7 @@ class TrainingStatistics:
 			step = element["step"]
 			tags = element.get("tags", ["default"])
 			data = element["data"]
+			file_name = element.get("file_name", "default")
 
 			assert isinstance(property_name, str), f"Property name must be a string instead of {type(property_name)}"
 			assert isinstance(env, int), f"Environment ID must be an integer instead of {type(env)}"
@@ -112,14 +121,31 @@ class TrainingStatistics:
 			assert isinstance(tags, list), f"Tags must be a list of strings instead of {type(tags)}"
 			for tag in tags:
 				assert isinstance(tag, str), f"A tag must be a string instead of {type(tag)}"
+			assert isinstance(file_name, str), f"File name must be a string instead of {type(file_name)}"
 
 			assert isinstance(data, PossibleDataTypes), f"Data must be a scalar value or a Numpy array instead of {type(data)}"
 
 			dimension, inferred_data_type, dtype = self.infer_visualization_type(data)
 
 			if property_name not in self.properties:
-				self.properties[property_name] = Property(property_name, dimension, inferred_data_type, dtype)
-			self.properties[property_name].add(env, episode, step, tags, data, dimension, inferred_data_type, dtype)
+				self.properties[property_name] = Property(property_name, dimension, inferred_data_type, dtype, file_name)
+			self.properties[property_name].add(env, episode, step, tags, data, dimension, inferred_data_type, dtype, file_name)
+
+		self.add_counter += 1
+		if (self.add_counter + 1) % 10 == 0:
+			self.save()
+
+	def save(self):
+		if len(self.properties) == 0:
+			return
+
+		name = list(self.properties.values())[0].file_name + ".magma"
+
+		thr = threading.Thread(target=self.persistence.save, args=(self.properties, name))
+		thr.start()
+
+	def load(self, name: str):
+		self.properties = self.persistence.load(name)
 
 	def get_properties(self) -> list[str]:
 		return sorted(list(self.properties.keys()))

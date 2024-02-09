@@ -28,6 +28,7 @@ class TrainingData(TypedDict):
 	step: Required[StepId]
 	tags: NotRequired[list[str]]
 	data: Required[float | np.ndarray]
+	file_name: NotRequired[str]
 
 TrainingDataBatch = list[TrainingData]
 
@@ -38,6 +39,7 @@ class EnvData(TypedDict):
 	dimension: Required[tuple[int]]
 	inferred_data_type: Required[InferredDataType]
 	dtype: Required[str]
+	file_name: Required[str]
 
 class EnvDataNative(TypedDict):
 	data: Required[PossibleDTypes | list[PossibleDTypes] | list[list[PossibleDTypes]] | list[list[list[PossibleDTypes]]]]
@@ -45,6 +47,7 @@ class EnvDataNative(TypedDict):
 	dimension: Required[list[int]]
 	inferred_data_type: Required[str]
 	dtype: Required[str]
+	file_name: Required[str]
 
 StepData = dict[EnvId, EnvData]
 EpisodeData = dict[StepId, StepData]

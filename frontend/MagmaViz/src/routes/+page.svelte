@@ -3,6 +3,7 @@
     import { id, connectWebSocket, getKeysFromLocalStorage, saveToLocalStorage, getFromLocalStorage } from "$lib/utils.js";
     import { DataViewer } from "./DataViewer/DataViewer.js";
     import { Header } from "./Header/Header.js";
+    import { saveData, loadData } from "./Api.js";
 
     let properties = {};
 
@@ -111,12 +112,20 @@
         refreshInterval = setInterval(refreshAll, minutes * 60 * 1000);
     }
 
+    let selectedFile = "";
+    $: {
+        if(selectedFile) {
+            loadData(selectedFile);
+        }
+    }
+
 </script>
 
 <Header/>
 
 <div id="settings">
     <button on:click={addVisualization}>Add visualization</button>
+
     <button on:click={refreshAll}>Refresh All</button>
     <label for="refreshPeriodSelector">Refresh periodically:</label>
     <select id="refreshPeriodSelector" on:change={setRefreshPeriod}>
@@ -126,6 +135,9 @@
         <option value="5">5 minutes</option>
         <option value="10">10 minutes</option>
     </select>
+
+    <button on:click={saveData}>Save</button>
+    <input type="file" bind:value={selectedFile}>
 
     <div id="configs">
         <label for="configSelector">Configs:</label>
