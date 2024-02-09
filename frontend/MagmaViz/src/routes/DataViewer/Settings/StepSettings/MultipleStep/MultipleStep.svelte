@@ -31,23 +31,32 @@
     }
 </script>
 
-<label for="multipleStepModeSelector">Multiple Step Mode:</label>
-<select id="multipleStepModeSelector" name="multipleStepModeSelector" bind:value="{mode}">
-    {#each modes as mode}
-        <option value="{mode}">{mode}</option>
-    {/each}
-</select>
-
-{#if mode === "display episode"}
-    <label for="episodeSelector">Episode:</label>
-    <select id="episodeSelector" name="episodeSelector" bind:value="{episode}">
-        {#each episodeIDs as episodeID}
-            <option value="{episodeID}">{episodeID}</option>
+<div class="container">
+    <label for="multipleStepModeSelector">Multiple Step Mode:</label>
+    <select id="multipleStepModeSelector" name="multipleStepModeSelector" bind:value="{mode}">
+        {#each modes as mode}
+            <option value="{mode}">{mode}</option>
         {/each}
     </select>
-{/if}
+
+    {#if mode === "display episode"}
+        <label for="episodeSelector">Episode:</label>
+        <select id="episodeSelector" name="episodeSelector" bind:value="{episode}">
+            {#each episodeIDs as episodeID}
+                <option value="{episodeID}">{episodeID}</option>
+            {/each}
+        </select>
+    {/if}
+</div>
 
 <style>
+    .container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
     label {
         margin-left: 5px;
         margin-right: 2px;
