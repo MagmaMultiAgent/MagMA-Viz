@@ -1,6 +1,7 @@
 import gzip
 import pickle
 import threading
+import copy
 
 import numpy as np
 
@@ -132,7 +133,7 @@ class TrainingStatistics:
 			self.properties[property_name].add(env, episode, step, tags, data, dimension, inferred_data_type, dtype, file_name)
 
 		self.add_counter += 1
-		if (self.add_counter + 1) % 10 == 0:
+		if (self.add_counter + 1) % 100 == 0:
 			self.save()
 
 	def save(self):
@@ -141,7 +142,7 @@ class TrainingStatistics:
 
 		name = list(self.properties.values())[0].file_name + ".magma"
 
-		thr = threading.Thread(target=self.persistence.save, args=(self.properties, name))
+		thr = threading.Thread(target=self.persistence.save, args=(copy.deepcopy(self.properties), name))
 		thr.start()
 
 	def load(self, name: str):

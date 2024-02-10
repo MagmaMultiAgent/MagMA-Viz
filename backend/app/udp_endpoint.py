@@ -17,11 +17,10 @@ class UDPEndpoint(asyncio.DatagramProtocol):
 	def connection_made(self, transport: asyncio.DatagramTransport) -> None:
 		self.transport = transport
 		self.logger.info(f"UDP endpoint started at {transport.get_extra_info('sockname')}")
-		self.logger.info(f"Client connected: {self.manager.active_connections}")
 
 	def datagram_received(self, received: bytes, addr: tuple[str, int]) -> None:
-		self.logger.info(f"Received data from {addr} with {len(received)} bytes.")
-		self.logger.info(f"Sending to {len(self.manager.active_connections)} clients.")
+		self.logger.debug(f"Received data from {addr} with {len(received)} bytes.")
+		self.logger.debug(f"Sending to {len(self.manager.active_connections)} clients.")
 
 		try:
 			self.train_statistics.add(received)

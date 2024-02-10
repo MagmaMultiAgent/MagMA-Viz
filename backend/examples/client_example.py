@@ -2,6 +2,8 @@ import numpy as np
 import random
 import sys
 import traceback
+from concurrent.futures import ProcessPoolExecutor
+
 
 import logging
 
@@ -59,70 +61,55 @@ def make_1d_example():
 	return random.random()
 
 
-def make_example(step_start_ind: int = 0, steps: int = 10):
-	envs = [0, 1, 3, 4]
-	data = []
+def train_env(env_id: int = 0, steps: int = 100):
+	print(f"Training env {env_id} for {steps} steps")
 
-	for _step in range(steps):
-		step = _step + step_start_ind
-		episode = step // 10
-		for env in envs:
-			_data = [
-				{
-					"env": env,
-					"episode": episode,
-					"step": step,
-					"property_name": "board1",
-					"tags": ["tag1"],
-					"data": make_2d_rgb_example()
-				},
-				{
-					"env": env,
-					"episode": episode,
-					"step": step,
-					"property_name": "board2",
-					"tags": ["tag2"],
-					"data": make_2d_rgb_example()
-				},
-				{
-					"env": env,
-					"episode": episode,
-					"step": step,
-					"property_name": "board3",
-					"tags": ["tag3"],
-					"data": make_2d_grayscale_example()
-				},
-				{
-					"env": env,
-					"episode": episode,
-					"step": step,
-					"property_name": "reward1",
-					"tags": ["tag4"],
-					"data": make_1d_example()
-				},
-				{
-					"env": env,
-					"episode": episode,
-					"step": step,
-					"property_name": "reward2",
-					"tags": ["tag5"],
-					"data": make_1d_example()
-				},
-			]
+	observation_client = Client()
+	reward_client = Client()
 
-			data += _data
+	for i in range(steps):
 
-	return data
+		if ((i+1) % 10) == 0:
+			print(f"Env {env_id}: {i+1} / {steps}")
 
+		observation = {
+			"observation": None,
+			"stream_data": {
+				"board1": make_2d_rgb_example(16),
+				"board2": make_2d_rgb_example(128),
+				"board3": make_2d_grayscale_example(64)
+			}
+		}
+		stream_data = observation["stream_data"]
+		episode_id = i // 10
+		data_to_send = []
+		for property_name, data in stream_data.items():
+			data_to_send.append({
+				"property_name": property_name,
+				"env": env_id,
+				"episode": episode_id,
+				"step": i,
+				"data": data
+			})
+		observation_client.send(data_to_send)
 
-client = Client()
-client.logger.setLevel(logging.DEBUG)
+		reward = make_1d_example()
+		reward_client.send([{
+			"property_name": "reward",
+			"env": env_id,
+			"episode": episode_id,
+			"step": i,
+			"data": reward
+		}])
 
-messages = 100
-for i in range(messages):
+env_count = 4
+steps_per_env = 100
 
-	if i % 10 == 0:
-		print(f"{i} / {messages}")
-		
-	example = make_example(i*1, 1)
-	client.send(example)
+processes = []
+with ProcessPoolExecutor(max_workers=env_count) as process_pool:
+	for i in range(env_count):
+		future = process_pool.submit(train_env, i, steps_per_env)
+		processes.append(future)
+
+for process in processes:
+	process.result()
