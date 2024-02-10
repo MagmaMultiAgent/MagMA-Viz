@@ -1,10 +1,16 @@
 import numpy as np
 import random
+import sys
+import traceback
 
 import logging
-import backend.utils.logging_config
 
-from .client import Client
+try:
+	from MagmaVizClient.client import Client
+except ImportError:
+	print(traceback.format_exc())
+	print("MagmaVizClient is not installed. Please install the package from the /backend/client/MagmaVizClient folder.", file=sys.stderr)
+	sys.exit(1)
 
 
 def make_2d_grayscale_example(size: int = 64):

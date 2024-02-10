@@ -1,1 +1,1 @@
-from .client.client import Client
+from backend.client.MagmaVizClient.client import Client

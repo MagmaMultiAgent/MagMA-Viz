@@ -1,0 +1,3 @@
+[submodule "backend/MagmaVizClient"]
+	path = backend/MagmaVizClient
+	url = https://github.com/MagmaMultiAgent/MagmaVizClient
