@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="./favicon.png" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		
+		<link href="./_app/immutable/assets/2.HXcdEpqu.css" rel="stylesheet">
+		<link rel="modulepreload" href="./_app/immutable/entry/start.uS0bEvn6.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/entry.SzQ1F7Io.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/scheduler.Jm98Fm9f.js">
+		<link rel="modulepreload" href="./_app/immutable/entry/app.GujTpzdo.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/index.4P2pUndl.js">
+		<link rel="modulepreload" href="./_app/immutable/nodes/0.JQ6fIZwq.js">
+		<link rel="modulepreload" href="./_app/immutable/nodes/2.Jk3gXaME.js">
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">  <div class="container svelte-5n616o" data-svelte-h="svelte-1gh47yf"><img src="/favicon.png" alt="icon" class="icon svelte-5n616o"> <div class="title svelte-5n616o">MagmaViz
+        <div class="sub-title svelte-5n616o">by MagMA</div></div> <div class="icons svelte-5n616o"><a href="mailto:m.gergely1999@gmail.com" class="svelte-5n616o"><img src="/icons/at-512.png" alt="email" class="icon svelte-5n616o"></a> <a href="https://github.com/MagmaMultiAgent" target="_blank" class="svelte-5n616o"><img src="/icons/github-mark-white.png" alt="github" class="icon svelte-5n616o"></a></div> </div> <div id="settings" class="svelte-1pjg75i"><button class="svelte-1pjg75i" data-svelte-h="svelte-1s8us4o">Add visualization</button> <button class="svelte-1pjg75i" data-svelte-h="svelte-11x7hzm">Refresh All</button> <label for="refreshPeriodSelector" class="svelte-1pjg75i" data-svelte-h="svelte-2fqjlr">Refresh periodically:</label> <select id="refreshPeriodSelector" class="svelte-1pjg75i"><option value="" class="svelte-1pjg75i" data-svelte-h="svelte-qz07fw">none</option><option value="1" class="svelte-1pjg75i" data-svelte-h="svelte-akqer6">1 minute</option><option value="2" class="svelte-1pjg75i" data-svelte-h="svelte-1vgjigp">2 minutes</option><option value="5" class="svelte-1pjg75i" data-svelte-h="svelte-8lz7an">5 minutes</option><option value="10" class="svelte-1pjg75i" data-svelte-h="svelte-54grnd">10 minutes</option></select> <button class="svelte-1pjg75i" data-svelte-h="svelte-8o57p8">Save</button> <input type="file" class="svelte-1pjg75i"> <div id="configs" class="svelte-1pjg75i"><label for="configSelector" class="svelte-1pjg75i" data-svelte-h="svelte-czmaqi">Configs:</label> <select id="configSelector" class="svelte-1pjg75i"></select> <button class="svelte-1pjg75i" data-svelte-h="svelte-1sha7f">Load</button> <input type="text" placeholder="New config name..." class="svelte-1pjg75i" value=""> <button class="svelte-1pjg75i" data-svelte-h="svelte-crjvoj">Save</button></div></div> <div class="grid-container svelte-1pjg75i"> </div> 
+			
+			<script>
+				{
+					__sveltekit_1kaaeu6 = {
+						base: new URL(".", location).pathname.slice(0, -1)
+					};
+
+					const element = document.currentScript.parentElement;
+
+					const data = [null,null];
+
+					Promise.all([
+						import("./_app/immutable/entry/start.uS0bEvn6.js"),
+						import("./_app/immutable/entry/app.GujTpzdo.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element, {
+							node_ids: [0, 2],
+							data,
+							form: null,
+							error: null
+						});
+					});
+				}
+			</script>
+		</div>
+	</body>
+</html>
