@@ -47,7 +47,7 @@
         let episode = settings.episode;
         let step = settings.step;
         let env = settings.env;
-        if(!episode || !step || !env) return;
+        if(episode === undefined || step === undefined || env === undefined) return;
 
         getDataForStep(propertyName, episode, step)
             .then(response => {
